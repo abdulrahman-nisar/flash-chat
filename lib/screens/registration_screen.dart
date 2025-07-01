@@ -1,5 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flashchat/components/rounded_button.dart';
+import 'package:flashchat/constants.dart';
+import 'package:firebase_auth/firebase_auth.dart';
+import 'package:flashchat/screens/chat_screen.dart'; // Import the chat screen to navigate after registration.
+import 'package:modal_progress_hud_nsn/modal_progress_hud_nsn.dart';
 
 class RegistrationScreen extends StatefulWidget {
   static const String id = 'registration_screen';
@@ -8,78 +12,91 @@ class RegistrationScreen extends StatefulWidget {
 }
 
 class _RegistrationScreenState extends State<RegistrationScreen> {
+  bool showSpinner = false; // Variable to control the loading indicator.
+  final FirebaseAuth _auth = FirebaseAuth.instance; // Initialize Firebase Auth.
+  String? email;
+  String? password;
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: Colors.white,
-      body: Padding(
-        padding: EdgeInsets.symmetric(horizontal: 24.0),
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: <Widget>[
-            Hero(
-              tag: 'logo',
-              child: Container(
-                height: 200.0,
-                child: Image.asset('images/logo.png'),
-              ),
-            ),
-            SizedBox(height: 48.0),
-            TextField(
-              onChanged: (value) {
-                //Do something with the user input.
-              },
-              decoration: InputDecoration(
-                hintText: 'Enter your email',
-                contentPadding: EdgeInsets.symmetric(
-                  vertical: 10.0,
-                  horizontal: 20.0,
-                ),
-                border: OutlineInputBorder(
-                  borderRadius: BorderRadius.all(Radius.circular(32.0)),
-                ),
-                enabledBorder: OutlineInputBorder(
-                  borderSide: BorderSide(color: Colors.blueAccent, width: 1.0),
-                  borderRadius: BorderRadius.all(Radius.circular(32.0)),
-                ),
-                focusedBorder: OutlineInputBorder(
-                  borderSide: BorderSide(color: Colors.blueAccent, width: 2.0),
-                  borderRadius: BorderRadius.all(Radius.circular(32.0)),
+      body: ModalProgressHUD(
+        inAsyncCall:
+            showSpinner, // Set to true if you want to show a loading indicator.
+        child: Padding(
+          padding: EdgeInsets.symmetric(horizontal: 24.0),
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: <Widget>[
+              Hero(
+                tag: 'logo',
+                child: Container(
+                  height: 200.0,
+                  child: Image.asset('images/logo.png'),
                 ),
               ),
-            ),
-            SizedBox(height: 8.0),
-            TextField(
-              onChanged: (value) {
-                //Do something with the user input.
-              },
-              decoration: InputDecoration(
-                hintText: 'Enter your password',
-                contentPadding: EdgeInsets.symmetric(
-                  vertical: 10.0,
-                  horizontal: 20.0,
+              SizedBox(height: 48.0),
+              TextField(
+                keyboardType: TextInputType
+                    .emailAddress, // Set keyboard type for email input.
+                textAlign: TextAlign.center,
+                style: TextStyle(
+                  color: Colors.black,
+                  fontWeight: FontWeight
+                      .bold, // Set text color to black54 for better visibility.
                 ),
-                border: OutlineInputBorder(
-                  borderRadius: BorderRadius.all(Radius.circular(32.0)),
-                ),
-                enabledBorder: OutlineInputBorder(
-                  borderSide: BorderSide(color: Colors.blueAccent, width: 1.0),
-                  borderRadius: BorderRadius.all(Radius.circular(32.0)),
-                ),
-                focusedBorder: OutlineInputBorder(
-                  borderSide: BorderSide(color: Colors.blueAccent, width: 2.0),
-                  borderRadius: BorderRadius.all(Radius.circular(32.0)),
+                onChanged: (value) {
+                  email = value; // Store the user input in the email variable.
+                },
+                decoration: KTextFieldDecoration.copyWith(
+                  hintText: 'Enter your email',
                 ),
               ),
-            ),
-            SizedBox(height: 24.0),
-            RoundedButton(
-              color: Colors.blueAccent,
-              title: 'Register',
-              onPressed: () {},
-            ),
-          ],
+              SizedBox(height: 8.0),
+              TextField(
+                textAlign: TextAlign.center,
+                obscureText: true, // Hide the password input.
+                style: TextStyle(
+                  color: Colors.blue,
+                  fontWeight: FontWeight
+                      .bold, // Set text color to black54 for better visibility.
+                ),
+                onChanged: (value) {
+                  password =
+                      value; // Store the user input in the password variable.
+                },
+                decoration: KTextFieldDecoration.copyWith(
+                  hintText: 'Enter your password',
+                ),
+              ),
+              SizedBox(height: 24.0),
+              RoundedButton(
+                color: Colors.blueAccent,
+                title: 'Register',
+                onPressed: () async {
+                  try {
+                    setState(() {
+                      showSpinner = true; // Show the loading indicator.
+                    });
+                    final newUser = await _auth.createUserWithEmailAndPassword(
+                      email: email!,
+                      password: password!,
+                    );
+                    if (newUser != null) {
+                      // If the user is successfully created, navigate to the chat screen.
+                      Navigator.pushNamed(context, ChatScreen.id);
+                    }
+                    setState(() {
+                      showSpinner = false; // Hide the loading indicator.
+                    });
+                  } catch (e) {
+                    print(e); // Print the error message to the console.
+                  }
+                },
+              ),
+            ],
+          ),
         ),
       ),
     );
